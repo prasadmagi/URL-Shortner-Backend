@@ -20,7 +20,7 @@ const verifyToken = (token) => {
 };
 
 const formatUrl = (shortCode) => {
-  const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+  const BASE_URL = process.env.BASE_URL || "http://localhost:4000";
   return `${BASE_URL}/api/url/${shortCode}`;
 };
 
