@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(node index.js)",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/signup -H 'Content-Type: application/json' -d '{\"name\":\"T\",\"email\":\"invalid\",\"password\":\"123\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/signup -H 'Content-Type: application/json' -d '{\"name\":\"Jane\",\"email\":\"jane@test.com\",\"password\":\"password123\"}')",
+      "Bash(pkill -f \"node index.js\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"jane@test.com\",\"password\":\"password123\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/url -H 'Content-Type: application/json' -d '{\"longUrl\":\"https://test1.com\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/url -H 'Content-Type: application/json' -d '{\"longUrl\":\"https://test2.com\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/url -H 'Content-Type: application/json' -d '{\"longUrl\":\"https://test3.com\"}')"
+    ]
+  }
+}
