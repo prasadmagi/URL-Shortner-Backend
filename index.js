@@ -16,7 +16,21 @@ app.use(express.json());
 
 // Swagger setup
 const specs = swaggerJsdoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(specs, {
+    explorer: true,
+    customSiteTitle: "URL Shortener API",
+    customCssUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css",
+    customJs: [
+      "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.js",
+    ],
+  })
+);
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -30,7 +44,4 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on ${PORT} 🚀`);
-  console.log(`Swagger docs: http://localhost:${PORT}/api-docs`);
-});
+app.listen(PORT, () => {});
