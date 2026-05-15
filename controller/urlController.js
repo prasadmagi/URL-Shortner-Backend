@@ -22,7 +22,7 @@ const createUrl = async (req, res) => {
 
       if (ipUrlCount >= 2) {
         return res.status(403).json({
-          error: "You've reached the 2 URL limit. Please login to create more.",
+          error: "You've reached the 2 URL limit. Now you have to login to create more.",
         });
       }
 
