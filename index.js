@@ -7,6 +7,7 @@ const swaggerUi = require("swagger-ui-express");
 
 const authRoutes = require("./routes/authRoutes");
 const urlRoutes = require("./routes/urlRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const swaggerOptions = require("./swagger/options");
 
 const app = express();
@@ -35,6 +36,7 @@ app.use(
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/url", urlRoutes);
+app.use("/api/admin", adminRoutes);
 
 
 app.get("/", (req, res) => {
@@ -44,4 +46,7 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {});
+app.listen(PORT, () => {
+  console.log(`Server running on ${PORT} 🚀`);
+  console.log(`Swagger docs: http://localhost:${PORT}/api-docs`);
+});

@@ -5,6 +5,15 @@ const { generateShortCode, formatUrl } = require("../utils/helpers");
 
 const REDIRECT_CACHE_TTL = 60 * 60 * 24; // 24 hours
 
+// Simple country detection from IP (uses Cloudflare/Vercel headers or falls back to null)
+const getCountryFromRequest = (req) => {
+  return (
+    req.headers["cf-ipcountry"] || // Cloudflare
+    req.headers["x-vercel-ip-country"] || // Vercel
+    null
+  );
+};
+
 const createUrl = async (req, res) => {
   try {
     const result = createUrlSchema.safeParse(req.body);
@@ -134,7 +143,7 @@ const deleteUrl = async (req, res) => {
     });
 
     // Invalidate Redis cache
-    await redis.del(`url:${shortCode}`);
+    await redis.del(`url:data:${shortCode}`);
 
     res.status(200).json({ message: "URL deleted successfully" });
   } catch (error) {
@@ -146,13 +155,14 @@ const deleteUrl = async (req, res) => {
 const redirectUrl = async (req, res) => {
   try {
     const { shortCode } = req.params;
+    const country = getCountryFromRequest(req);
 
     // Try to get from Redis cache first
-    let longUrl = await redis.get(`url:${shortCode}`);
+    let url = await redis.get(`url:data:${shortCode}`);
 
-    if (!longUrl) {
+    if (!url) {
       // Cache miss - fetch from database
-      const url = await prisma.url.findUnique({
+      url = await prisma.url.findUnique({
         where: { shortCode },
       });
 
@@ -160,19 +170,28 @@ const redirectUrl = async (req, res) => {
         return res.status(404).json({ error: "URL not found" });
       }
 
-      longUrl = url.longUrl;
-
-      // Store in Redis cache with TTL
-      await redis.set(`url:${shortCode}`, longUrl, { ex: REDIRECT_CACHE_TTL });
+      // Store in Redis cache with TTL (as JSON string)
+      await redis.set(`url:data:${shortCode}`, JSON.stringify(url), { ex: REDIRECT_CACHE_TTL });
+    } else {
+      // Parse cached JSON
+      url = typeof url === "string" ? JSON.parse(url) : url;
     }
 
-    // Increment click count in background (fire and forget for performance)
+    // Create analytics record in background (fire and forget)
+    prisma.clickAnalytics.create({
+      data: {
+        urlId: url.id,
+        country,
+      },
+    }).catch(console.error);
+
+    // Increment click count in background
     prisma.url.update({
       where: { shortCode },
       data: { clicks: { increment: 1 } },
     }).catch(console.error);
 
-    return res.redirect(longUrl);
+    return res.redirect(url.longUrl);
   } catch (error) {
     console.error(error, "error");
     res.status(500).json({ error: "Internal server error" });

@@ -13,6 +13,7 @@ model User {
   name      String
   email     String   @unique
   password  String
+  role      String   @default("USER") // USER or ADMIN
   createdAt DateTime @default(now())
 
   urls      Url[]
@@ -24,8 +25,18 @@ model Url {
   longUrl   String
   clicks    Int       @default(0)
   ipAddress String?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   userId    Int?
   user      User?     @relation(fields: [userId], references: [id])
+
+  analytics ClickAnalytics[]
+}
+
+model ClickAnalytics {
+  id        Int      @id @default(autoincrement())
+  urlId     Int
+  url       Url      @relation(fields: [urlId], references: [id], onDelete: Cascade)
+  country   String?
+  clickedAt DateTime @default(now())
 }
