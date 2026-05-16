@@ -1,6 +1,9 @@
-const prisma = require("../prismaClient");
+const prisma = require("../config/database");
+const redis = require("../config/redis");
 const { createUrlSchema } = require("../validation/urlValidation");
 const { generateShortCode, formatUrl } = require("../utils/helpers");
+
+const REDIRECT_CACHE_TTL = 60 * 60 * 24; // 24 hours
 
 const createUrl = async (req, res) => {
   try {
@@ -130,6 +133,9 @@ const deleteUrl = async (req, res) => {
       where: { shortCode },
     });
 
+    // Invalidate Redis cache
+    await redis.del(`url:${shortCode}`);
+
     res.status(200).json({ message: "URL deleted successfully" });
   } catch (error) {
     console.error(error, "error");
@@ -141,20 +147,32 @@ const redirectUrl = async (req, res) => {
   try {
     const { shortCode } = req.params;
 
-    const url = await prisma.url.findUnique({
-      where: { shortCode },
-    });
+    // Try to get from Redis cache first
+    let longUrl = await redis.get(`url:${shortCode}`);
 
-    if (!url) {
-      return res.status(404).json({ error: "URL not found" });
+    if (!longUrl) {
+      // Cache miss - fetch from database
+      const url = await prisma.url.findUnique({
+        where: { shortCode },
+      });
+
+      if (!url) {
+        return res.status(404).json({ error: "URL not found" });
+      }
+
+      longUrl = url.longUrl;
+
+      // Store in Redis cache with TTL
+      await redis.set(`url:${shortCode}`, longUrl, { ex: REDIRECT_CACHE_TTL });
     }
 
-    await prisma.url.update({
+    // Increment click count in background (fire and forget for performance)
+    prisma.url.update({
       where: { shortCode },
       data: { clicks: { increment: 1 } },
-    });
+    }).catch(console.error);
 
-    return res.redirect(url.longUrl);
+    return res.redirect(longUrl);
   } catch (error) {
     console.error(error, "error");
     res.status(500).json({ error: "Internal server error" });

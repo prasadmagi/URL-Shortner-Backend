@@ -1,4 +1,5 @@
 const { signUp, logIn } = require("../controller/authController");
+const { rateLimiter } = require("../middleware/rateLimiter");
 
 const router = require("express").Router();
 
@@ -36,7 +37,7 @@ const router = require("express").Router();
  *       409:
  *         description: Email already registered
  */
-router.post("/signup", signUp);
+router.post("/signup", rateLimiter(60, 5), signUp);
 
 /**
  * @swagger
@@ -66,6 +67,6 @@ router.post("/signup", signUp);
  *       401:
  *         description: Invalid credentials
  */
-router.post("/login", logIn);
+router.post("/login", rateLimiter(60, 10), logIn);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const prisma = require("../prismaClient");
+const prisma = require("../config/database");
 const { signUpSchema, logInSchema } = require("../validation/authValidation");
 const { generateToken } = require("../utils/helpers");
 

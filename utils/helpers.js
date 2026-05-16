@@ -1,19 +1,18 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-
-const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
+const jwtConfig = require("../config/jwt");
 
 const generateShortCode = (length = 6) => {
   return crypto.randomBytes(length).toString("base64url").slice(0, length);
 };
 
-const generateToken = (payload, expiresIn = "7d") => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+const generateToken = (payload, expiresIn = jwtConfig.expiresIn) => {
+  return jwt.sign(payload, jwtConfig.secret, { expiresIn });
 };
 
 const verifyToken = (token) => {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, jwtConfig.secret);
   } catch (error) {
     return null;
   }
